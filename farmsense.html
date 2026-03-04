@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FarmSense — Plant Disease Detector</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f0f7f0;color:#1a2e1a;min-height:100vh;}
+.header{background:linear-gradient(135deg,#1b4332,#40916c);color:#fff;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.header h1{font-size:20px;font-weight:900;}.header p{font-size:11px;opacity:.7;margin-top:3px;}
+.hlogo{font-size:38px;margin-right:12px;}
+.hleft{display:flex;align-items:center;}
+.status{background:rgba(0,0,0,.3);border-radius:10px;padding:8px 14px;font-size:12px;color:#fff;}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle;background:#ffcc02;}
+.tabs{background:#fff;border-bottom:2px solid #e0e0e0;display:flex;padding:0 24px;overflow-x:auto;}
+.tab{padding:14px 18px;border:none;background:none;cursor:pointer;font-size:14px;color:#777;font-weight:500;white-space:nowrap;border-bottom:3px solid transparent;margin-bottom:-2px;}
+.tab.on{color:#2d6a4f;font-weight:700;border-bottom-color:#2d6a4f;}
+.page{padding:22px 24px;max-width:980px;margin:0 auto;}
+.sec{display:none;}.sec.on{display:block;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:660px){.grid{grid-template-columns:1fr;}}
+.card{background:#fff;border-radius:16px;padding:22px;box-shadow:0 2px 12px rgba(0,0,0,.08);}
+.ucard{background:#fff;border:2px dashed #81c784;border-radius:16px;padding:28px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.08);}
+.btn{border:none;border-radius:10px;padding:11px 20px;font-weight:700;font-size:14px;cursor:pointer;transition:opacity .2s;}
+.btn:hover{opacity:.85;}.btn-g{background:#2d6a4f;color:#fff;}.btn-o{background:#fff;color:#2d6a4f;border:2px solid #2d6a4f;}
+.btn-r{background:#c62828;color:#fff;}.btn-or{background:#e65100;color:#fff;}
+.btn-big{background:linear-gradient(135deg,#1b4332,#52b788);color:#fff;width:100%;margin-top:14px;font-size:16px;padding:14px;border-radius:12px;font-weight:800;border:none;cursor:pointer;}
+.btn-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px;}
+#leaf-img{width:100%;max-height:220px;object-fit:contain;border-radius:12px;margin-bottom:14px;display:none;}
+.empty{text-align:center;padding:44px 0;color:#ccc;}.empty .ic{font-size:54px;margin-bottom:12px;}
+.loading{text-align:center;padding:44px 0;color:#2d6a4f;}.loading .ic{font-size:48px;margin-bottom:12px;}
+.rtop{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.pname{font-size:12px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:4px;}
+.chip{display:inline-block;font-weight:800;font-size:17px;padding:6px 16px;border-radius:24px;}
+.ch{background:#e8f5e9;color:#2d6a4f;}.cs{background:#fff3e0;color:#e65100;}
+.cnum{font-weight:900;font-size:26px;color:#2d6a4f;text-align:right;}
+.clbl{font-size:12px;color:#888;}
+.bar{background:#e0e0e0;border-radius:6px;height:8px;margin:8px 0 14px;}
+.barfill{height:100%;border-radius:6px;background:linear-gradient(90deg,#52b788,#1b4332);transition:width .8s;}
+.stitle{font-size:13px;font-weight:700;margin-bottom:6px;}
+.tag{display:inline-block;background:#fff9c4;color:#6d4c41;border-radius:20px;padding:4px 12px;font-size:12px;margin:3px 3px 3px 0;border:1px solid #f9a825;}
+.step{background:#f1f8e9;border-left:4px solid #2d6a4f;border-radius:0 8px 8px 0;padding:9px 13px;margin-bottom:7px;font-size:13px;}
+.step strong{color:#2d6a4f;}
+.prev{margin-top:14px;background:#e3f2fd;border-radius:10px;padding:11px 15px;font-size:13px;color:#1565c0;}
+.badge{display:inline-block;color:#fff;padding:2px 12px;border-radius:20px;font-size:12px;font-weight:700;}
+.High{background:#e53935;}.Medium{background:#fb8c00;}.Low{background:#43a047;}.None{background:#43a047;}.Unknown{background:#888;}
+.err{background:#ffebee;color:#c62828;border-radius:10px;padding:14px;font-size:14px;line-height:1.7;}
+.vbox{position:relative;background:#111;border-radius:12px;overflow:hidden;min-height:200px;margin-bottom:14px;}
+#camv{width:100%;display:none;border-radius:12px;}
+.camoff{text-align:center;padding:50px 20px;color:#555;}
+.livebadge{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.7);color:#fff;padding:5px 13px;border-radius:20px;font-size:12px;display:none;align-items:center;gap:6px;}
+.ldot{width:9px;height:9px;border-radius:50%;background:#f44336;animation:blink 1s infinite;}
+.tips{margin-top:14px;background:#f1f8e9;border-radius:10px;padding:13px;font-size:12px;color:#33691e;line-height:1.8;}
+#snapprev{width:100%;max-height:140px;object-fit:contain;border-radius:10px;margin-bottom:12px;display:none;}
+.hcard{display:flex;gap:14px;background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 1px 8px rgba(0,0,0,.06);align-items:center;}
+.hthumb{width:62px;height:62px;object-fit:cover;border-radius:10px;flex-shrink:0;}
+.hinfo{flex:1;}.hname{font-weight:700;font-size:15px;margin-bottom:3px;}.hplant{color:#666;font-size:13px;margin-bottom:7px;}
+.hconf{font-weight:900;font-size:20px;color:#2d6a4f;}.htime{font-size:11px;color:#bbb;margin-top:2px;}
+.srch{width:100%;padding:11px 15px;border-radius:10px;border:1px solid #ddd;font-size:14px;margin-bottom:18px;outline:none;}
+.gcard{background:#fff;border-radius:13px;padding:16px;margin-bottom:12px;box-shadow:0 1px 8px rgba(0,0,0,.06);border-left:5px solid #2d6a4f;}
+.ghead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.ghead h4{font-size:15px;}.grow{font-size:13px;margin-bottom:4px;}.gtreat{font-size:13px;color:#2d6a4f;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="hleft">
+    <span class="hlogo">🌿</span>
+    <div><h1>FarmSense — Plant Disease Detector</h1><p>MobileViT-XS · PlantVillage Dataset · 28 Disease Classes</p></div>
+  </div>
+  <div class="status">
+    <span class="dot" id="sdot"></span><span id="stxt">Checking backend...</span>
+    <div id="shint" style="opacity:.7;margin-top:3px;display:none">▶ Run: python app.py</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab on"  onclick="sw('scan',this)">🔍 Scan Leaf</button>
+  <button class="tab"     onclick="sw('camera',this)">📹 Live Camera</button>
+  <button class="tab"     onclick="sw('history',this)">📋 Results &amp; History</button>
+  <button class="tab"     onclick="sw('guide',this)">📚 Disease Guide</button>
+</div>
+
+<div class="page">
+
+<!-- SCAN -->
+<div id="scan" class="sec on">
+  <div class="grid">
+    <div class="ucard" id="dropzone">
+      <img id="leaf-img" alt="leaf"/>
+      <div id="uph">
+        <div style="font-size:52px;margin-bottom:10px">🌿</div>
+        <h3 style="font-size:18px;margin-bottom:8px">Upload a Leaf Photo</h3>
+        <p style="color:#777;font-size:13px;line-height:1.6">Point camera at a diseased leaf.<br>Fill the frame with good lighting.</p>
+      </div>
+      <input type="file" id="fm" accept="image/*" capture="environment" style="display:none" onchange="filePick(this)">
+      <input type="file" id="fg" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="filePick(this)">
+      <div class="btn-row">
+        <button class="btn btn-g" onclick="document.getElementById('fm').click()">📷 Open Camera</button>
+        <button class="btn btn-o" onclick="document.getElementById('fg').click()">🖼 Gallery</button>
+      </div>
+      <button class="btn-big" id="abtn" style="display:none" onclick="doScan()">🔬 Analyse Leaf</button>
+      <p style="font-size:11px;color:#bbb;margin-top:12px">📁 Drag &amp; drop also works · JPG PNG WEBP</p>
+    </div>
+    <div class="card" id="sres">
+      <div class="empty"><div class="ic">🍃</div><p style="font-size:14px">Upload a leaf to get a diagnosis</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- CAMERA -->
+<div id="camera" class="sec">
+  <div class="grid">
+    <div class="card">
+      <h3 style="font-size:16px;margin-bottom:14px">📹 Live Camera Feed</h3>
+      <div class="vbox">
+        <video id="camv" autoplay playsinline muted></video>
+        <div class="camoff" id="camoff"><div style="font-size:48px">📷</div><p style="margin-top:8px;font-size:13px">Camera is off</p></div>
+        <div class="livebadge" id="lbadge"><span class="ldot"></span><span id="ltxt">LIVE · next scan in 5s</span></div>
+      </div>
+      <canvas id="ccvs" style="display:none"></canvas>
+      <div class="btn-row" style="justify-content:flex-start">
+        <button class="btn btn-g"  id="bstart"    onclick="camStart()">▶ Start Camera</button>
+        <button class="btn btn-g"  id="bsnap"     onclick="doSnap()" style="display:none">📸 Snap &amp; Scan</button>
+        <button class="btn btn-or" id="bliver"     onclick="liveStart()" style="display:none">⚡ Auto-Scan (5s)</button>
+        <button class="btn btn-o"  id="blivestop"  onclick="liveStop()" style="display:none">⏸ Stop Auto</button>
+        <button class="btn btn-r"  id="bstop"     onclick="camStop()" style="display:none">⏹ Stop</button>
+      </div>
+      <div id="cerr" style="margin-top:12px;display:none"></div>
+      <div class="tips">
+        <strong>📌 Tips for accurate results:</strong><br>
+        • Hold the leaf 15–25 cm from camera<br>
+        • Use natural daylight, avoid shadows<br>
+        • Make the leaf fill the frame<br>
+        • Keep camera steady while scanning
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="font-size:16px;margin-bottom:14px">🔬 Live Diagnosis</h3>
+      <img id="snapprev" alt="snap"/>
+      <div id="cres"><div class="empty"><div class="ic">🍃</div><p style="font-size:14px">Start camera and snap a leaf</p></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div id="history" class="sec">
+  <h3 id="htitle" style="margin-bottom:16px">📋 Scan History</h3>
+  <div id="hlist">
+    <div class="card empty" style="padding:52px">
+      <div class="ic">📋</div><p style="font-size:15px;margin-top:10px">No scans yet — use Scan or Camera tab!</p>
+    </div>
+  </div>
+</div>
+
+<!-- GUIDE -->
+<div id="guide" class="sec">
+  <h3 style="margin-bottom:14px">📚 Disease Reference Guide — 28 Classes</h3>
+  <input class="srch" id="gsrch" placeholder="🔍 Search by disease or crop..." oninput="filterG()">
+  <div id="glist"></div>
+</div>
+
+</div><!-- .page -->
+
+<script>
+const API = "http://localhost:5000";
+
+// ── All 28 class details ──────────────────────────────────────
+const INFO = {
+  Apple_Apple_scab:{sev:"Medium",sym:["Olive-green velvety spots","Yellowing around lesions","Premature leaf drop"],tx:["Apply myclobutanil fungicide at bud break","Rake and destroy fallen leaves","Prune for better air flow"],prev:"Plant scab-resistant apple varieties."},
+  Apple_Black_rot:{sev:"High",sym:["Brown circular spots with purple border","Black mummified fruit","Cankers on branches"],tx:["Remove all mummified fruit","Apply captan fungicide","Prune all infected wood"],prev:"Keep orchard clean of dead wood and fallen fruit."},
+  Apple_Cedar_apple_rust:{sev:"Medium",sym:["Bright orange-yellow spots on leaves","Spore tubes under leaf","Early defoliation"],tx:["Apply myclobutanil at bud break","Remove nearby juniper trees if possible"],prev:"Choose rust-resistant apple varieties."},
+  Apple_Healthy:{sev:"None",sym:["No visible disease symptoms","Normal healthy leaf colour"],tx:["No treatment needed"],prev:"Maintain balanced fertilization and irrigation."},
+  BellPepper_Bacterial_spot:{sev:"High",sym:["Water-soaked spots on leaves","Dark brown lesions with yellow halo","Fruit surface scabs"],tx:["Copper-based bactericide spray","Remove infected leaves immediately","Avoid overhead irrigation"],prev:"Use certified disease-free seed. Rotate crops yearly."},
+  BellPepper_Healthy:{sev:"None",sym:["Healthy green leaves","No spots or lesions"],tx:["No treatment needed"],prev:"Regular watering and balanced fertilization."},
+  Cherry_Powdery_mildew:{sev:"Low",sym:["White powdery coating on leaves","Curling of young leaves","Stunted growth"],tx:["Apply sulphur-based fungicide","Improve air circulation","Remove heavily infected shoots"],prev:"Avoid excessive nitrogen fertilizer."},
+  Cherry_Healthy:{sev:"None",sym:["Deep green healthy leaves","No lesions"],tx:["No treatment needed"],prev:"Prune regularly for good air circulation."},
+  Corn_Cercospora_leaf_spot:{sev:"Medium",sym:["Rectangular grey-tan lesions","Lesions parallel to leaf veins","Early leaf senescence"],tx:["Apply strobilurin fungicide","Plant tolerant hybrids","Rotate with non-host crops"],prev:"Reduce leaf wetness with proper plant spacing."},
+  Corn_Common_rust:{sev:"Medium",sym:["Brick-red oval pustules on both leaf surfaces","Pustules turn black late season"],tx:["Apply triazole or strobilurin fungicide","Use rust-resistant hybrids"],prev:"Plant early to avoid peak spore season."},
+  Corn_Northern_leaf_blight:{sev:"High",sym:["Large grey-green cigar-shaped lesions","Lesions 1-6 inches long","Rapid blighting in wet weather"],tx:["Apply mancozeb or azoxystrobin","Rotate with soybean or wheat","Use resistant hybrids"],prev:"Avoid continuous corn planting in same field."},
+  Corn_Healthy:{sev:"None",sym:["Uniform green colour","No lesions or pustules"],tx:["No treatment needed"],prev:"Crop rotation and balanced fertilization."},
+  Grape_Black_rot:{sev:"High",sym:["Tan-brown circular spots on leaves","Black shrivelled mummified berries","Salmon-coloured spores"],tx:["Apply myclobutanil or mancozeb","Remove all mummified berries","Prune for open canopy"],prev:"Remove all infected plant debris after harvest."},
+  Grape_Esca:{sev:"High",sym:["Tiger-stripe yellowing between veins","Sudden vine collapse","Dark streaking in wood"],tx:["Prune all infected wood","Apply wound sealant","No effective chemical cure exists"],prev:"Avoid pruning wounds during wet conditions."},
+  Grape_Leaf_blight:{sev:"Medium",sym:["Irregular brown-black lesions on older leaves","Water-soaked lesion margins","Defoliation"],tx:["Apply copper fungicide","Remove all fallen infected leaves","Improve drainage"],prev:"Ensure good air circulation through canopy management."},
+  Grape_Healthy:{sev:"None",sym:["Vigorous green leaves","No spots or discolouration"],tx:["No treatment needed"],prev:"Annual pruning and balanced nutrient management."},
+  Peach_Bacterial_spot:{sev:"Medium",sym:["Small water-soaked leaf spots turning purple-brown","Shot-hole appearance","Fruit surface pitting"],tx:["Apply copper hydroxide spray","Avoid overhead irrigation","Remove infected plant parts"],prev:"Use resistant peach varieties where available."},
+  Peach_Healthy:{sev:"None",sym:["Glossy green healthy leaves","No spots or lesions"],tx:["No treatment needed"],prev:"Regular pruning and orchard sanitation."},
+  Potato_Early_blight:{sev:"Medium",sym:["Dark brown spots with concentric yellow rings","Spots on older lower leaves first","Yellowing"],tx:["Apply copper fungicide","Remove infected leaves","Avoid wetting foliage while watering"],prev:"Rotate crops. Use certified disease-free seed tubers."},
+  Potato_Late_blight:{sev:"High",sym:["Water-soaked dark lesions","White mould under leaves in humid weather","Rapid plant collapse"],tx:["Spray mancozeb or chlorothalonil immediately","Destroy all infected plants","Avoid overhead watering"],prev:"Plant certified seed potato. Monitor humidity closely."},
+  Potato_Healthy:{sev:"None",sym:["Healthy dark green foliage","No lesions or mould"],tx:["No treatment needed"],prev:"Crop rotation and hill soil around plants."},
+  Strawberry_Leaf_scorch:{sev:"Medium",sym:["Small purple-red spots on upper leaf surface","Spots coalesce causing leaf scorch","Yellowing"],tx:["Apply captan or myclobutanil","Remove all infected leaves","Improve air circulation"],prev:"Avoid overhead irrigation. Remove old foliage after harvest."},
+  Strawberry_Healthy:{sev:"None",sym:["Bright green healthy leaves","No spots or scorch"],tx:["No treatment needed"],prev:"Renovate planting annually after harvest."},
+  Tomato_Bacterial_spot:{sev:"High",sym:["Small water-soaked spots turning dark brown","Yellow halo around spots","Fruit surface scabs"],tx:["Apply copper bactericide","Remove infected leaves immediately","Avoid working with wet plants"],prev:"Use disease-free transplants. Rotate tomato crops."},
+  Tomato_Early_blight:{sev:"Medium",sym:["Dark brown spots with target-ring pattern","Yellowing around spots","Spots start on older leaves"],tx:["Apply chlorothalonil or copper fungicide","Mulch around plant base","Remove infected lower leaves"],prev:"Stake plants for airflow. Avoid overhead watering."},
+  Tomato_Late_blight:{sev:"High",sym:["Irregular dark water-soaked lesions","White mould on leaf underside","Rapid plant collapse"],tx:["Spray mancozeb immediately","Remove and bag infected plants","Do not compost infected material"],prev:"Avoid dense planting. Monitor during cool wet weather."},
+  Tomato_Septoria_leaf_spot:{sev:"Medium",sym:["Small circular spots with dark border and grey centre","Numerous spots causing defoliation"],tx:["Apply copper fungicide","Remove lower infected leaves","Stake plants for air flow"],prev:"Crop rotation and removal of tomato debris after season."},
+  Tomato_Yellow_leaf_curl_virus:{sev:"High",sym:["Upward leaf curling and yellowing","Stunted and bushy plant growth","Flower and fruit drop"],tx:["Remove infected plants immediately","Control whitefly with neem oil","Use reflective mulch"],prev:"Use virus-resistant varieties. Install insect-proof nets."},
+  Tomato_Healthy:{sev:"None",sym:["Deep green healthy leaves","No spots or curling"],tx:["No treatment needed"],prev:"Regular scouting and balanced fertilization."},
+};
+
+const GDATA = [
+  {ic:"🍎",name:"Apple Scab",plant:"Apple",risk:"Medium"},{ic:"🍎",name:"Apple Black Rot",plant:"Apple",risk:"High"},
+  {ic:"🍎",name:"Cedar Apple Rust",plant:"Apple",risk:"Medium"},{ic:"🌶️",name:"Bacterial Spot",plant:"Bell Pepper",risk:"High"},
+  {ic:"🍒",name:"Powdery Mildew",plant:"Cherry",risk:"Low"},{ic:"🌽",name:"Cercospora Leaf Spot",plant:"Corn",risk:"Medium"},
+  {ic:"🌽",name:"Common Rust",plant:"Corn",risk:"Medium"},{ic:"🌽",name:"Northern Leaf Blight",plant:"Corn",risk:"High"},
+  {ic:"🍇",name:"Black Rot",plant:"Grape",risk:"High"},{ic:"🍇",name:"Esca",plant:"Grape",risk:"High"},
+  {ic:"🍇",name:"Leaf Blight",plant:"Grape",risk:"Medium"},{ic:"🍑",name:"Bacterial Spot",plant:"Peach",risk:"Medium"},
+  {ic:"🥔",name:"Early Blight",plant:"Potato",risk:"Medium"},{ic:"🥔",name:"Late Blight",plant:"Potato",risk:"High"},
+  {ic:"🍓",name:"Leaf Scorch",plant:"Strawberry",risk:"Medium"},{ic:"🍅",name:"Bacterial Spot",plant:"Tomato",risk:"High"},
+  {ic:"🍅",name:"Early Blight",plant:"Tomato",risk:"Medium"},{ic:"🍅",name:"Late Blight",plant:"Tomato",risk:"High"},
+  {ic:"🍅",name:"Septoria Leaf Spot",plant:"Tomato",risk:"Medium"},{ic:"🍅",name:"Yellow Leaf Curl Virus",plant:"Tomato",risk:"High"},
+];
+
+// ── state ──
+let selFile=null, camStream=null, liveIv=null, tickIv=null, liveN=5, histArr=[];
+
+// ── backend check ──
+window.onload=()=>{
+  buildGuide();
+  fetch(API+"/health").then(r=>r.json()).then(()=>{
+    document.getElementById("sdot").style.background="#69f0ae";
+    document.getElementById("stxt").textContent="Backend: Online ✓";
+  }).catch(()=>{
+    document.getElementById("sdot").style.background="#ff5252";
+    document.getElementById("stxt").textContent="Backend: Offline";
+    document.getElementById("shint").style.display="block";
+  });
+};
+
+// ── tab switch ──
+function sw(id,btn){
+  document.querySelectorAll(".sec").forEach(s=>s.classList.remove("on"));
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("on"));
+  document.getElementById(id).classList.add("on");
+  btn.classList.add("on");
+  if(id!=="camera") camStop();
+}
+
+// ── drag drop ──
+const dz=document.getElementById("dropzone");
+dz.addEventListener("dragover",e=>e.preventDefault());
+dz.addEventListener("drop",e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)loadPreview(f);});
+
+function filePick(inp){const f=inp.files[0];if(f)loadPreview(f);}
+
+function loadPreview(f){
+  selFile=f;
+  const img=document.getElementById("leaf-img");
+  img.src=URL.createObjectURL(f);img.style.display="block";
+  document.getElementById("uph").style.display="none";
+  document.getElementById("abtn").style.display="block";
+  document.getElementById("sres").innerHTML=`<div class="empty"><div class="ic">🍃</div><p style="font-size:14px">Click Analyse Leaf to run the model</p></div>`;
+}
+
+// ── call backend ──
+async function callAPI(blob, fname){
+  const fd=new FormData();
+  fd.append("file",blob,fname||"leaf.jpg");
+  const res=await fetch(API+"/predict",{method:"POST",body:fd});
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error||"Server error "+res.status);}
+  const d=await res.json();
+  const info=INFO[d.class]||{sev:"Unknown",sym:["No details available"],tx:["Consult a local agronomist"],prev:"Monitor your plants regularly."};
+  return{plant:d.plant,disease:d.disease,confidence:d.confidence,is_healthy:d.is_healthy,severity:info.sev,symptoms:info.sym,treatment:info.tx,prevention:info.prev};
+}
+
+// ── render result HTML ──
+function renderRes(id, r, snap){
+  const snapHtml=snap?`<img src="${snap}" style="width:100%;max-height:140px;object-fit:contain;border-radius:10px;margin-bottom:12px">`:"";;
+  document.getElementById(id).innerHTML=`
+    ${snapHtml}
+    <div class="rtop">
+      <div>
+        <div class="pname">🌱 ${r.plant}</div>
+        <div class="chip ${r.is_healthy?"ch":"cs"}">${r.is_healthy?"✅":"⚠️"} ${r.disease}</div>
+      </div>
+      <div><div class="clbl">Model Confidence</div><div class="cnum">${r.confidence}%</div></div>
+    </div>
+    <div class="bar"><div class="barfill" style="width:${r.confidence}%"></div></div>
+    <p style="font-size:13px;margin-bottom:10px"><strong>Severity:</strong> <span class="badge ${r.severity}">${r.severity}</span></p>
+    <p class="stitle">Symptoms:</p>
+    <div style="margin-bottom:14px">${r.symptoms.map(s=>`<span class="tag">${s}</span>`).join("")}</div>
+    <p class="stitle">Treatment Plan:</p>
+    ${r.treatment.map((t,i)=>`<div class="step"><strong>Step ${i+1}:</strong> ${t}</div>`).join("")}
+    <div class="prev">💡 <strong>Prevention:</strong> ${r.prevention}</div>
+  `;
+}
+function showLoad(id){document.getElementById(id).innerHTML=`<div class="loading"><div class="ic">🔍</div><p style="font-weight:700;font-size:16px">Running MobileViT-XS model...</p><p style="color:#888;font-size:13px;margin-top:6px">Checking 28 disease classes</p></div>`;}
+function showErr(id,msg){document.getElementById(id).innerHTML=`<div class="err">⚠️ ${msg}<br><small>Make sure backend is running: <code>python app.py</code></small></div>`;}
+
+// ── scan tab ──
+async function doScan(){
+  if(!selFile)return;
+  showLoad("sres");
+  document.getElementById("abtn").disabled=true;
+  document.getElementById("abtn").textContent="🔍 Running model...";
+  try{
+    const r=await callAPI(selFile,selFile.name);
+    renderRes("sres",r,null);
+    addHist(document.getElementById("leaf-img").src,r);
+  }catch(e){showErr("sres",e.message);}
+  finally{document.getElementById("abtn").disabled=false;document.getElementById("abtn").textContent="🔬 Analyse Leaf";}
+}
+
+// ── camera tab ──
+async function camStart(){
+  hideCE();
+  try{
+    camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment",width:{ideal:1280},height:{ideal:720}}});
+    const v=document.getElementById("camv");v.srcObject=camStream;v.style.display="block";
+    document.getElementById("camoff").style.display="none";
+    document.getElementById("bstart").style.display="none";
+    ["bsnap","bliver","bstop"].forEach(id=>document.getElementById(id).style.display="inline-block");
+  }catch(e){showCE("Camera access denied. Allow camera permission in your browser.");}
+}
+function camStop(){
+  liveStop();
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
+  const v=document.getElementById("camv");v.srcObject=null;v.style.display="none";
+  document.getElementById("camoff").style.display="block";
+  document.getElementById("bstart").style.display="inline-block";
+  ["bsnap","bliver","blivestop","bstop"].forEach(id=>document.getElementById(id).style.display="none");
+  document.getElementById("lbadge").style.display="none";
+}
+async function doSnap(){
+  const v=document.getElementById("camv"),c=document.getElementById("ccvs");
+  c.width=v.videoWidth||640;c.height=v.videoHeight||480;
+  c.getContext("2d").drawImage(v,0,0,c.width,c.height);
+  const snap=c.toDataURL("image/jpeg",0.92);
+  const sp=document.getElementById("snapprev");sp.src=snap;sp.style.display="block";
+  showLoad("cres");hideCE();
+  try{
+    const blob=await new Promise(res=>c.toBlob(res,"image/jpeg",0.92));
+    const r=await callAPI(blob,"webcam.jpg");
+    renderRes("cres",r,null);
+    addHist(snap,r);
+  }catch(e){showErr("cres",e.message);}
+}
+function liveStart(){
+  document.getElementById("bliver").style.display="none";
+  document.getElementById("blivestop").style.display="inline-block";
+  document.getElementById("lbadge").style.display="flex";
+  liveN=5;doSnap();
+  liveIv=setInterval(()=>doSnap(),5000);
+  tickIv=setInterval(()=>{liveN=liveN>1?liveN-1:5;document.getElementById("ltxt").textContent="LIVE · next scan in "+liveN+"s";},1000);
+}
+function liveStop(){
+  clearInterval(liveIv);clearInterval(tickIv);
+  document.getElementById("bliver").style.display="inline-block";
+  document.getElementById("blivestop").style.display="none";
+  document.getElementById("lbadge").style.display="none";
+}
+function showCE(m){const e=document.getElementById("cerr");e.style.display="block";e.innerHTML=`<div class="err">⚠️ ${m}</div>`;}
+function hideCE(){document.getElementById("cerr").style.display="none";}
+
+// ── history ──
+function addHist(img,r){
+  histArr.unshift({img,plant:r.plant,disease:r.disease,confidence:r.confidence,severity:r.severity,time:new Date().toLocaleString()});
+  const t=document.getElementById("htitle");
+  t.textContent="📋 Scan History — "+histArr.length+" scan"+(histArr.length!==1?"s":"");
+  document.getElementById("hlist").innerHTML=histArr.map(h=>`
+    <div class="hcard">
+      <img class="hthumb" src="${h.img}" alt="leaf">
+      <div class="hinfo"><div class="hname">${h.disease}</div><div class="hplant">🌱 ${h.plant}</div><span class="badge ${h.severity}">${h.severity}</span></div>
+      <div><div class="hconf">${h.confidence}%</div><div class="htime">${h.time}</div></div>
+    </div>`).join("");
+}
+
+// ── guide ──
+function buildGuide(){filterG();}
+function filterG(){
+  const q=document.getElementById("gsrch").value.toLowerCase();
+  const filtered=GDATA.filter(d=>d.name.toLowerCase().includes(q)||d.plant.toLowerCase().includes(q));
+  if(!filtered.length){document.getElementById("glist").innerHTML=`<p style="color:#aaa;text-align:center">No results found.</p>`;return;}
+  document.getElementById("glist").innerHTML=filtered.map(d=>{
+    const key=Object.keys(INFO).find(k=>k.startsWith(d.plant.split("/")[0].trim()+"_")&&!k.endsWith("Healthy"));
+    const info=INFO[key]||null;
+    return`<div class="gcard">
+      <div class="ghead"><h4>${d.ic} ${d.name}</h4><span class="badge ${d.risk}">${d.risk} Risk</span></div>
+      <p class="grow" style="font-size:12px;color:#888">🌱 Affects: <strong>${d.plant}</strong></p>
+      ${info?`<p class="grow"><strong>Symptoms:</strong> ${info.sym.join(", ")}</p>
+      <p class="gtreat"><strong>💊 Treatment:</strong> ${info.tx[0]}</p>
+      <p class="gtreat" style="margin-top:4px">💡 <strong>Prevention:</strong> ${info.prev}</p>`:""}
+    </div>`;
+  }).join("");
+}
+</script>
+</body>
+</html>
