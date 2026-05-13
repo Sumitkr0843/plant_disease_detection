@@ -4,65 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Plant Disease Detector</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f0f7f0;color:#1a2e1a;min-height:100vh;}
-.header{background:linear-gradient(135deg,#1b4332,#40916c);color:#fff;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
-.header h1{font-size:20px;font-weight:900;}.header p{font-size:11px;opacity:.7;margin-top:3px;}
-.hlogo{font-size:38px;margin-right:12px;}
-.hleft{display:flex;align-items:center;}
-.status{background:rgba(0,0,0,.3);border-radius:10px;padding:8px 14px;font-size:12px;color:#fff;}
-.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle;background:#ffcc02;}
-.tabs{background:#fff;border-bottom:2px solid #e0e0e0;display:flex;padding:0 24px;overflow-x:auto;}
-.tab{padding:14px 18px;border:none;background:none;cursor:pointer;font-size:14px;color:#777;font-weight:500;white-space:nowrap;border-bottom:3px solid transparent;margin-bottom:-2px;}
-.tab.on{color:#2d6a4f;font-weight:700;border-bottom-color:#2d6a4f;}
-.page{padding:22px 24px;max-width:980px;margin:0 auto;}
-.sec{display:none;}.sec.on{display:block;}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
-@media(max-width:660px){.grid{grid-template-columns:1fr;}}
-.card{background:#fff;border-radius:16px;padding:22px;box-shadow:0 2px 12px rgba(0,0,0,.08);}
-.ucard{background:#fff;border:2px dashed #81c784;border-radius:16px;padding:28px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.08);}
-.btn{border:none;border-radius:10px;padding:11px 20px;font-weight:700;font-size:14px;cursor:pointer;transition:opacity .2s;}
-.btn:hover{opacity:.85;}.btn-g{background:#2d6a4f;color:#fff;}.btn-o{background:#fff;color:#2d6a4f;border:2px solid #2d6a4f;}
-.btn-r{background:#c62828;color:#fff;}.btn-or{background:#e65100;color:#fff;}
-.btn-big{background:linear-gradient(135deg,#1b4332,#52b788);color:#fff;width:100%;margin-top:14px;font-size:16px;padding:14px;border-radius:12px;font-weight:800;border:none;cursor:pointer;}
-.btn-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px;}
-#leaf-img{width:100%;max-height:220px;object-fit:contain;border-radius:12px;margin-bottom:14px;display:none;}
-.empty{text-align:center;padding:44px 0;color:#ccc;}.empty .ic{font-size:54px;margin-bottom:12px;}
-.loading{text-align:center;padding:44px 0;color:#2d6a4f;}.loading .ic{font-size:48px;margin-bottom:12px;}
-.rtop{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
-.pname{font-size:12px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:4px;}
-.chip{display:inline-block;font-weight:800;font-size:17px;padding:6px 16px;border-radius:24px;}
-.ch{background:#e8f5e9;color:#2d6a4f;}.cs{background:#fff3e0;color:#e65100;}
-.cnum{font-weight:900;font-size:26px;color:#2d6a4f;text-align:right;}
-.clbl{font-size:12px;color:#888;}
-.bar{background:#e0e0e0;border-radius:6px;height:8px;margin:8px 0 14px;}
-.barfill{height:100%;border-radius:6px;background:linear-gradient(90deg,#52b788,#1b4332);transition:width .8s;}
-.stitle{font-size:13px;font-weight:700;margin-bottom:6px;}
-.tag{display:inline-block;background:#fff9c4;color:#6d4c41;border-radius:20px;padding:4px 12px;font-size:12px;margin:3px 3px 3px 0;border:1px solid #f9a825;}
-.step{background:#f1f8e9;border-left:4px solid #2d6a4f;border-radius:0 8px 8px 0;padding:9px 13px;margin-bottom:7px;font-size:13px;}
-.step strong{color:#2d6a4f;}
-.prev{margin-top:14px;background:#e3f2fd;border-radius:10px;padding:11px 15px;font-size:13px;color:#1565c0;}
-.badge{display:inline-block;color:#fff;padding:2px 12px;border-radius:20px;font-size:12px;font-weight:700;}
-.High{background:#e53935;}.Medium{background:#fb8c00;}.Low{background:#43a047;}.None{background:#43a047;}.Unknown{background:#888;}
-.err{background:#ffebee;color:#c62828;border-radius:10px;padding:14px;font-size:14px;line-height:1.7;}
-.vbox{position:relative;background:#111;border-radius:12px;overflow:hidden;min-height:200px;margin-bottom:14px;}
-#camv{width:100%;display:none;border-radius:12px;}
-.camoff{text-align:center;padding:50px 20px;color:#555;}
-.livebadge{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.7);color:#fff;padding:5px 13px;border-radius:20px;font-size:12px;display:none;align-items:center;gap:6px;}
-.ldot{width:9px;height:9px;border-radius:50%;background:#f44336;animation:blink 1s infinite;}
-.tips{margin-top:14px;background:#f1f8e9;border-radius:10px;padding:13px;font-size:12px;color:#33691e;line-height:1.8;}
-#snapprev{width:100%;max-height:140px;object-fit:contain;border-radius:10px;margin-bottom:12px;display:none;}
-.hcard{display:flex;gap:14px;background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 1px 8px rgba(0,0,0,.06);align-items:center;}
-.hthumb{width:62px;height:62px;object-fit:cover;border-radius:10px;flex-shrink:0;}
-.hinfo{flex:1;}.hname{font-weight:700;font-size:15px;margin-bottom:3px;}.hplant{color:#666;font-size:13px;margin-bottom:7px;}
-.hconf{font-weight:900;font-size:20px;color:#2d6a4f;}.htime{font-size:11px;color:#bbb;margin-top:2px;}
-.srch{width:100%;padding:11px 15px;border-radius:10px;border:1px solid #ddd;font-size:14px;margin-bottom:18px;outline:none;}
-.gcard{background:#fff;border-radius:13px;padding:16px;margin-bottom:12px;box-shadow:0 1px 8px rgba(0,0,0,.06);border-left:5px solid #2d6a4f;}
-.ghead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
-.ghead h4{font-size:15px;}.grow{font-size:13px;margin-bottom:4px;}.gtreat{font-size:13px;color:#2d6a4f;}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
