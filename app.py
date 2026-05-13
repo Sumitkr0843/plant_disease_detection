@@ -90,3 +90,4 @@ def health_check():
 if __name__ == "__main__":
     print("🌿 FarmSense Backend Running at http://localhost:5000")
     app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000)
