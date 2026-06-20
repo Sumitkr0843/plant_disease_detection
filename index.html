@@ -197,6 +197,28 @@ function loadPreview(f){
   document.getElementById("sres").innerHTML=`<div class="empty"><div class="ic">🍃</div><p style="font-size:14px">Click Analyse Leaf to run the model</p></div>`;
 }
 
+// ── flexible INFO lookup (handles formatting differences from model checkpoint) ──
+function normalizeKey(s){
+  return s
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, "")   // drop parenthetical text e.g. "(Black Measles)"
+    .replace(/[^a-z0-9]+/g, "_") // collapse spaces/punctuation to underscores
+    .replace(/^_+|_+$/g, "");    // trim leading/trailing underscores
+}
+const INFO_NORMALIZED = Object.keys(INFO).reduce((acc,k)=>{
+  acc[normalizeKey(k)] = INFO[k];
+  return acc;
+},{});
+function lookupInfo(className){
+  const fallback = {sev:"Unknown",sym:["No details available"],tx:["Consult a local agronomist"],prev:"Monitor your plants regularly."};
+  if(!className) return fallback;
+  const norm = normalizeKey(className);
+  if(INFO_NORMALIZED[norm]) return INFO_NORMALIZED[norm];
+  // try substring match either direction as a last resort
+  const match = Object.keys(INFO_NORMALIZED).find(k => norm.includes(k) || k.includes(norm));
+  return match ? INFO_NORMALIZED[match] : fallback;
+}
+
 // ── call backend ──
 async function callAPI(blob, fname){
   const fd=new FormData();
@@ -204,7 +226,7 @@ async function callAPI(blob, fname){
   const res=await fetch(API+"/predict",{method:"POST",body:fd});
   if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error||"Server error "+res.status);}
   const d=await res.json();
-  const info=INFO[d.class]||{sev:"Unknown",sym:["No details available"],tx:["Consult a local agronomist"],prev:"Monitor your plants regularly."};
+  const info=lookupInfo(d.class);
   return{plant:d.plant,disease:d.disease,confidence:d.confidence,is_healthy:d.is_healthy,severity:info.sev,symptoms:info.sym,treatment:info.tx,prevention:info.prev};
 }
 
@@ -390,4 +412,4 @@ function filterG(){
 }
 </script>
 </body>
-</html> 
+</html>
